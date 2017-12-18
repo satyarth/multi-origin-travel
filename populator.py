@@ -4,9 +4,13 @@ from pymongo import MongoClient
 from multiprocessing.dummy import Pool as ThreadPool
 from ratelimit import rate_limited
 
-from secret import key
+from secret import key, mongo_uri
 
-client = MongoClient()
+if mongo_uri:
+	client = MongoClient(mongo_uri)
+else:
+	client = MongoClient()
+
 db = client.quotes
 quotes_db = db.quotes
 
