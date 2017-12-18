@@ -56,7 +56,7 @@ def process_city(city_id):
 	quotes_db.insert_many(quotes)
 
 
-with open("../city_ids.json") as f:
+with open("city_ids.json") as f:
 	cities = json.load(f)
 
 city_ids = [cities[city] for city in cities]
