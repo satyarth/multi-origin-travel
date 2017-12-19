@@ -125,19 +125,19 @@ class SimAnnSolver:
         return solution_best, obj_best
 
 
-with open("city_ids.json") as f:
-    cities = json.load(f)
-
-sources = list(cities.keys())[30:32]
-
-print(sources)
-
-date_from = datetime.datetime.strptime("2018-01-01", FORMAT)
-date_to = datetime.datetime.strptime("2018-01-20", FORMAT)
-
-interactor = SkyscannerInteractor(cities, sources)
-solver = SimAnnSolver(date_from, date_to, interactor)
-solver.solve(T_0 = 1000)
-
-
-print(solver.random_solution())
+# with open("city_ids.json") as f:
+#     cities = json.load(f)
+#
+# sources = list(cities.keys())[30:32]
+#
+# print(sources)
+#
+# date_from = datetime.datetime.strptime("2018-01-01", FORMAT)
+# date_to = datetime.datetime.strptime("2018-01-20", FORMAT)
+#
+# interactor = SkyscannerInteractor(cities, sources)
+# solver = SimAnnSolver(date_from, date_to, interactor)
+# solver.solve(T_0 = 1000)
+#
+#
+# print(solver.random_solution())
