@@ -3,6 +3,7 @@ from util import min_roundtrip_price, search_quotes
 import json
 import datetime
 import math
+from multiprocessing.dummy import Pool as ThreadPool
 
 FORMAT = "%Y-%m-%d"
 
@@ -13,21 +14,28 @@ class SkyscannerInteractor:
         self.sources = sources
 
     def get_price(self, solution):
-        price = 0
+        self.price = 0
 
         destination_code = self.cities[solution.destination]
         date_come_str = datetime.datetime.strftime(solution.date_come, FORMAT)
         date_leave_str = datetime.datetime.strftime(solution.date_leave, FORMAT)
 
-
-
-        for s in self.sources:
-            # print(self.cities[s], destination_code, date_come_str, date_leave_str)
-            quotes = search_quotes(self.cities[s], destination_code, date_come_str, date_leave_str)
+        def fetch_price(source):
+            quotes = search_quotes(self.cities[source], destination_code, date_come_str, date_leave_str)
             min_price = min_roundtrip_price(quotes)
-            price += min_price
+            self.price += min_price
 
-        return price
+        pool = ThreadPool(len(self.sources))
+        pool.map(fetch_price, self.sources)
+
+
+        # for s in self.sources:
+        #     # print(self.cities[s], destination_code, date_come_str, date_leave_str)
+        #     quotes = search_quotes(self.cities[s], destination_code, date_come_str, date_leave_str)
+        #     min_price = min_roundtrip_price(quotes)
+        #     self.price += min_price
+
+        return self.price
 
 
 
@@ -117,19 +125,19 @@ class SimAnnSolver:
         return solution_best, obj_best
 
 
-# with open("city_ids.json") as f:
-#     cities = json.load(f)
-#
-# sources = list(cities.keys())[30:32]
-#
-# print(sources)
-#
-# date_from = datetime.datetime.strptime("2018-01-01", FORMAT)
-# date_to = datetime.datetime.strptime("2018-01-10", FORMAT)
-#
-# interactor = SkyscannerInteractor(cities, sources)
-# solver = SimAnnSolver(date_from, date_to, interactor)
-# solver.solve(T_0 = 100)
-#
-#
-# print(solver.random_solution())
+with open("city_ids.json") as f:
+    cities = json.load(f)
+
+sources = list(cities.keys())[30:32]
+
+print(sources)
+
+date_from = datetime.datetime.strptime("2018-01-01", FORMAT)
+date_to = datetime.datetime.strptime("2018-01-20", FORMAT)
+
+interactor = SkyscannerInteractor(cities, sources)
+solver = SimAnnSolver(date_from, date_to, interactor)
+solver.solve(T_0 = 1000)
+
+
+print(solver.random_solution())
