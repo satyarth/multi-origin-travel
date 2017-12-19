@@ -3,6 +3,7 @@ import json
 from pymongo import MongoClient
 from multiprocessing.dummy import Pool as ThreadPool
 from ratelimit import rate_limited
+from util import process_quotes
 
 from secret import key, mongo_uri
 
@@ -31,24 +32,6 @@ def build_query(origin_city_id):
            outbound + "/" +\
            inbound + "/" +\
            "?apiKey=" + key
-
-@rate_limited(300, 60)
-def process_quotes(response): # Expects dict, use response.json()
-	quotes = response['Quotes']
-	places = response['Places']
-	place_details = {}
-
-	for place in places:
-	    place_details[place['PlaceId']] = place
-	    
-	for quote in quotes:
-	    if 'InboundLeg' in quote:
-	        quote['InboundLeg']['OriginDetails'] = place_details[quote['InboundLeg']['OriginId']]
-	        quote['InboundLeg']['DestinationDetails'] = place_details[quote['InboundLeg']['DestinationId']]
-
-	    if 'OutboundLeg' in quote:
-	        quote['OutboundLeg']['OriginDetails'] = place_details[quote['OutboundLeg']['OriginId']]
-	        quote['OutboundLeg']['DestinationDetails'] = place_details[quote['OutboundLeg']['DestinationId']]
 
 def process_city(city_id):
 	query = build_query(city_id)
