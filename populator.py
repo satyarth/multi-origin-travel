@@ -42,12 +42,13 @@ def process_quotes(response): # Expects dict, use response.json()
 	    place_details[place['PlaceId']] = place
 	    
 	for quote in quotes:
-	    quote['InboundLeg']['OriginDetails'] = place_details[quote['InboundLeg']['OriginId']]
-	    quote['InboundLeg']['DestinationDetails'] = place_details[quote['InboundLeg']['DestinationId']]
-	    quote['OutboundLeg']['OriginDetails'] = place_details[quote['OutboundLeg']['OriginId']]
-	    quote['OutboundLeg']['DestinationDetails'] = place_details[quote['OutboundLeg']['DestinationId']]
+	    if 'InboundLeg' in quote:
+	        quote['InboundLeg']['OriginDetails'] = place_details[quote['InboundLeg']['OriginId']]
+	        quote['InboundLeg']['DestinationDetails'] = place_details[quote['InboundLeg']['DestinationId']]
 
-	return quotes
+	    if 'OutboundLeg' in quote:
+	        quote['OutboundLeg']['OriginDetails'] = place_details[quote['OutboundLeg']['OriginId']]
+	        quote['OutboundLeg']['DestinationDetails'] = place_details[quote['OutboundLeg']['DestinationId']]
 
 def process_city(city_id):
 	query = build_query(city_id)
