@@ -3,7 +3,8 @@ from ratelimit import rate_limited
 import math
 
 from secret import key
-pricer = FlightsCache('***REMOVED***')
+
+pricer = FlightsCache(key)
 
 def process_quotes(response): # Expects dict, use response.json()
     quotes = response['Quotes']
