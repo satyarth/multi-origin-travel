@@ -48,3 +48,6 @@ def min_roundtrip_price(quotes):
     roundtrip_cost = min([math.inf] + [trip['MinPrice'] for trip in roundtrips])
     
     return min(multiticket_cost, roundtrip_cost)
+#
+# qs = search_quotes("LOND-sky", "PMO-sky", "2018-01-03", "2018-01-06")
+# print(qs)
