@@ -27,7 +27,7 @@ city_ids = {}
 for city in cities:
     print(city)
     r = requests.get(query_string(city)).json()
-    city_ids[city] = r['Places'][0]['CityId']
+    city_ids[city] = r['Places'][0]['CityId'][:-4]
     sleep(.1)
 
 with open('city_ids.json', 'w') as f:
