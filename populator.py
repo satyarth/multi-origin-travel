@@ -33,12 +33,20 @@ def build_query(origin_city_id):
            inbound + "/" +\
            "?apiKey=" + key
 
+def truncate_roundtrip_quote(quote):
+	return {
+		'Origin': quote['OutboundLeg']['OriginDetails']['CityId'],
+		'Destination': quote['OutboundLeg']['DestinationDetails']['CityId'],
+		'OutboundDate': quote['OutboundLeg']['DepartureDate'],
+		'InboundDate': quote['InboundLeg']['DepartureDate'],
+		'MinPrice': quote['MinPrice']
+    }
+
 def process_city(city_id):
 	query = build_query(city_id)
 	r = requests.get(query).json()
 	quotes = process_quotes(r)
-	quotes_db.insert_many(quotes)
-
+	quotes_db.insert_many(map(truncate_roundtrip_quote, quotes))
 
 with open("city_ids.json") as f:
 	cities = json.load(f)
