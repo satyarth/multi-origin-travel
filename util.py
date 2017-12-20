@@ -40,15 +40,34 @@ def search_quotes(origin, destination, outbound, inbound):
     return process_quotes(skyscanner_response)
 
 def min_roundtrip_price(quotes):
-    roundtrips = filter(lambda quote: 'InboundLeg' in quote and 'OutboundLeg' in quote, quotes)
-    outbounds = filter(lambda quote: 'InboundLeg' not in quote and 'OutboundLeg' in quote, quotes)
-    inbounds = filter(lambda quote: 'InboundLeg' in quote and 'OutboundLeg' not in quote, quotes)
+    roundtrips = list(filter(lambda quote: 'InboundLeg' in quote and 'OutboundLeg' in quote, quotes))
+    outbounds = list(filter(lambda quote: 'InboundLeg' not in quote and 'OutboundLeg' in quote, quotes))
+    inbounds = list(filter(lambda quote: 'InboundLeg' in quote and 'OutboundLeg' not in quote, quotes))
     
     # Stupid hack to avoid minima of empty lists
-    multiticket_cost = min([math.inf] + [o['MinPrice'] + i['MinPrice'] for o in outbounds for i in inbounds])
-    roundtrip_cost = min([math.inf] + [trip['MinPrice'] for trip in roundtrips])
+
+    min_cost = math.inf
+    cheapest_route = {'InboundLeg':None, 'OutboundLeg':None}
+
+    for o in outbounds:
+        for i in inbounds:
+            cost = o['MinPrice'] + i['MinPrice']
+            if cost < min_cost:
+                min_cost = cost
+                cheapest_route['InboundLeg'] = i['InboundLeg']
+                cheapest_route['OutboundLeg'] = o['OutboundLeg']
+
+    for r in roundtrips:
+        cost = r['MinPrice']
+        if cost < min_cost:
+            min_cost = cost
+            cheapest_route['InboundLeg'] = r['InboundLeg']
+            cheapest_route['OutboundLeg'] = r['OutboundLeg']
+    #
+    #
+    # multiticket_cost = min([math.inf] + [o['MinPrice'] + i['MinPrice'] for o in outbounds for i in inbounds])
+    # roundtrip_cost = min([math.inf] + [trip['MinPrice'] for trip in roundtrips])
     
-    return min(multiticket_cost, roundtrip_cost)
-#
-# qs = search_quotes("LOND-sky", "PMO-sky", "2018-01-03", "2018-01-06")
-# print(qs)
+    # return min(multiticket_cost, roundtrip_cost)
+    return min_cost, cheapest_route
+
