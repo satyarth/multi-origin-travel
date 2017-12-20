@@ -48,3 +48,5 @@ class SearchModel():
         r = self.quotes_db.find()
         
         return list(r)
+
+
