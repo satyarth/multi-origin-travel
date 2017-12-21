@@ -50,8 +50,9 @@ class SimAnnSolver:
 
     def random_solution(self):
         dest = np.random.choice(self.destinations)
-        date_come = random_date(*self.date_range)
-        date_leave = random_date(date_come, self.date_range[1])
+        days_gap = datetime.timedelta(days=self.min_days)
+        date_come = random_date(self.date_range[0], self.date_range[1]-days_gap)
+        date_leave = random_date(date_come+days_gap, self.date_range[1])
 
         out = Solution(dest, date_come, date_leave)
 
