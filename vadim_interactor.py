@@ -1,4 +1,24 @@
 from util import process_quotes
+from ratelimit import rate_limited
+from datetime import datetime
+from skyscanner.skyscanner import FlightsCache
+from secret import key
+
+pricer = FlightsCache(key)
+
+def place_ids(place):
+    place_attrs = []
+    
+    for attr_name in ['CityId', 'IATACode', 'SkyscannerCode', 'PlaceId']:
+        try:
+            place_attrs.append(place[attr_name])
+        except Exception:
+            pass
+        
+    if len(place_attrs) == 0:
+        place_attrs.append(place)
+        
+    return place_attrs
 
 def roundtrip_quote(outbound_quote, inbound_quote):
     return {
@@ -50,6 +70,8 @@ def skyscanner_search(origin, destination, outbound, inbound):
 
 def as_date(date_time):
     return date_time.rsplit('T')[0]
+def as_python_date(date_time):
+    return datetime.strptime(as_date(date_time), "%Y-%m-%d")
 
 def search_quotes(origin, destination, outbound, inbound):
     origin = place_ids(origin)[0]
