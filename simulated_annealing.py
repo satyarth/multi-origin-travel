@@ -5,6 +5,7 @@ import datetime, time
 import math
 from multiprocessing.dummy import Pool as ThreadPool
 from search import SearchModel
+from solution import Solution
 
 FORMAT = "%Y-%m-%d"
 
@@ -60,21 +61,6 @@ class SkyscannerInteractor:
         #     self.price += min_price
 
         return price[0]
-
-
-
-class Solution:
-    def __init__(self, destination, date_come, date_leave):
-        self.destination = destination
-        self.date_come = date_come
-        self.date_leave = date_leave
-        self.routes = None
-        self.price = None
-
-    def __repr__(self):
-        out = "TO: {0},\tCOME: {1},\tLEAVE: {2}"
-        return out.format(self.destination, self.date_come, self.date_leave)
-
 
 class SimAnnSolver:
     def __init__(self, date_from, date_to, interactor, min_days=0):
