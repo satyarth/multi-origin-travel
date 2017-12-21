@@ -1,42 +1,10 @@
 import numpy as np
-from util import min_roundtrip_price, search_quotes, random_date
+from util import min_roundtrip_price, search_quotes, random_date, SkyscannerInteractor, FORMAT
 import json
 import datetime, time
 import math
-from multiprocessing.dummy import Pool as ThreadPool
 from search import SearchModel
 from solution import Solution, FORMAT
-
-
-
-
-class SkyscannerInteractor:
-    def __init__(self, cities, sources):
-        self.cities = cities
-        self.sources = sources
-
-
-    def get_price(self, solution):
-        price = [0,]
-        routes = []
-
-        destination_code = self.cities[solution.destination]
-        date_come_str = datetime.datetime.strftime(solution.date_come, FORMAT)
-        date_leave_str = datetime.datetime.strftime(solution.date_leave, FORMAT)
-
-        def fetch_price(source):
-            quotes = search_quotes(self.cities[source], destination_code, date_come_str, date_leave_str)
-            min_price, route = min_roundtrip_price(quotes)
-            routes.append(route)
-            price[0] = price[0] + min_price
-
-        pool = ThreadPool(len(self.sources))
-        pool.map(fetch_price, self.sources)
-
-        solution.price = price[0]
-        solution.routes = routes
-
-        return price[0]
 
 
 class SimAnnSolver:
