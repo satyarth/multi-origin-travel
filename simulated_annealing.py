@@ -5,9 +5,9 @@ import datetime, time
 import math
 from multiprocessing.dummy import Pool as ThreadPool
 from search import SearchModel
-from solution import Solution
+from solution import Solution, FORMAT
 
-FORMAT = "%Y-%m-%d"
+
 
 
 class SkyscannerInteractor:
