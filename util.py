@@ -1,4 +1,4 @@
-from skyscanner.skyscanner import FlightsCache
+from skyscanner.skyscanner import FlightsCache, Flights
 from ratelimit import rate_limited
 from datetime import datetime
 import math
@@ -30,7 +30,7 @@ def process_quotes(response): # Expects dict, use response.json()
 
 @rate_limited(490, 60)
 def search_quotes(origin, destination, outbound, inbound):
-    skyscanner_response = pricer.get_cheapest_quote(
+    skyscanner_response = pricer.get_cheapest_quotes(
             market='RU',
             currency='RUB',
             locale='en-GB',
@@ -50,7 +50,7 @@ def min_roundtrip_price(quotes):
     # Stupid hack to avoid minima of empty lists
 
     min_cost = math.inf
-    cheapest_route = {'InboundLeg':None, 'OutboundLeg':None, 'MinPrice':None, 'MultiTicket': None}
+    cheapest_route = {}
 
     for o in outbounds:
         for i in inbounds:
@@ -73,6 +73,55 @@ def min_roundtrip_price(quotes):
 
 
     return min_cost, cheapest_route
+
+def get_cheapest_link(origin, destination, outbounddate, inbounddate=None):
+
+
+    def get_live_quotes(origin, destination, outbounddate, inbounddate=None):
+        pricer = Flights(key)
+        suffix = '-sky'
+
+        origin = origin+suffix
+        destination = destination+suffix
+
+        if not inbounddate:
+            response = pricer.get_result(
+                country='RU',
+                currency='RUB',
+                locale='en-GB',
+                originplace=origin,
+                destinationplace=destination,
+                outbounddate=outbounddate,
+                adults=1).parsed
+        else:
+            response = pricer.get_result(
+                country='RU',
+                currency='RUB',
+                locale='en-GB',
+                originplace=origin,
+                destinationplace=destination,
+                outbounddate=outbounddate,
+                inbounddate=inbounddate,
+                adults=1).parsed
+
+        return response
+
+    def cheapest_link(response):
+        itinerary = response['Itineraries'][0]
+        link = ''
+        cost = np.inf
+
+        for popt in itinerary['PricingOptions']:
+            if popt['Price'] < cost:
+                cost = popt['Price']
+                link = popt['DeeplinkUrl']
+
+        return link
+
+    quotes = get_live_quotes(origin, destination, outbounddate, inbounddate)
+    link = cheapest_link(quotes)
+
+    return link
 
 def random_date(start, end):
     prop = np.random.random()
@@ -110,3 +159,5 @@ class SkyscannerInteractor:
         return price[0]
 
 FORMAT = "%Y-%m-%d"
+
+

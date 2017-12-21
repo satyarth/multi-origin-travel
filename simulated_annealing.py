@@ -50,8 +50,6 @@ class SimAnnSolver:
         solution_curr = self.random_solution()
         obj_curr = self.interactor.get_price(solution_curr)
 
-
-
         solution_best, obj_best = solution_curr, obj_curr
 
         st = time.time()
@@ -65,8 +63,6 @@ class SimAnnSolver:
             obj_neighbour = self.interactor.get_price(solution_neighbour)
 
             obj_delta = obj_neighbour-obj_curr
-
-            # print(obj_delta)
 
             if np.random.random() < np.exp(-obj_delta / T):
                 obj_curr, solution_curr = obj_neighbour, solution_neighbour
@@ -93,7 +89,7 @@ def solve_SA(outbound_date, inbound_date, origins, solution_callback, stop_callb
     outbound_date = datetime.datetime.strptime(outbound_date, FORMAT)
 
     solver = SimAnnSolver(outbound_date, inbound_date, interactor, solution_callback, stop_callback, min_days)
-    solver.solve()
+    return solver.solve(max_iter=100)[0]
 
 
 
@@ -117,56 +113,14 @@ outbound_date = datetime.datetime.strptime(outdate, FORMAT)
 
 solver = SimAnnSolver(outbound_date, inbound_date, interactor, solution_cb, stop_cb, min_days)
 
-sol = solver.random_solution()
-
-from skyscanner.skyscanner import Flights
-from secret import key
-from  util import process_quotes
-
-pricer = Flights(key)
-# pricer.
-skyscanner_response = pricer.get_result(
-    country='RU',
-    currency='RUB',
-    locale='en-GB',
-    originplace='RIGA-sky',
-    destinationplace='BUDA-sky',
-    outbounddate='2018-01-03',
-    inbounddate='2018-01-06',
-    adults=1).parsed
-
-def cheapest_link(response):
-    itinerary = response['itinaries'][0]
-    link = itinerary['BookingDetailsLink']['Uri']
 
 
-# proc = process_quotes(skyscanner_response)
+sol = solve_SA(outdate, indate, origins, solution_cb, stop_cb, min_days)
 
-print(skyscanner_response)
+from manager import SolutionManager
 
-# solve_SA(outdate, indate, origins, solution_cb, stop_cb, min_days)
+sm = SolutionManager(1,2)
 
+links = sm.get_links(sol)
 
-# np.random.seed(1)
-
-# with open("city_ids.json") as f:
-#     cities = json.load(f)
-#
-#
-# # sources = list(cities.keys())[18:21]
-# sources = ["Berlin", "Brussels", "London"]
-#
-# print(sources)
-#
-# date_from = datetime.datetime.strptime("2018-01-01", FORMAT)
-# date_to = datetime.datetime.strptime("2018-01-15", FORMAT)
-#
-# jcb = lambda s: print()
-# nbcb = lambda s: print("New best solution: {0}".format(s))
-#
-#
-# interactor = SkyscannerInteractor(cities, sources)
-# solver = SimAnnSolver(date_from, date_to, interactor, newbest_callback=nbcb, min_days=3)
-# solution, price = solver.solve(T_0 = 5000, max_iter=400)
-#
-# print(solution)
+print(links)

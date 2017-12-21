@@ -1,4 +1,4 @@
-
+from util import get_cheapest_link
 
 class SolutionManager:
 
@@ -24,8 +24,55 @@ class SolutionManager:
         if not solution.routes:
             return []
 
-        links = []
+        def route2links(route):
+            links = []
+            outleg = route['OutboundLeg']
+            inleg = route['InboundLeg']
 
-        # def get
+            from_city = outleg['OriginDetails']['CityId']
+            to_city = inleg['OriginDetails']['CityId']
+
+            if route['MultiTicket']:
+                link_out = get_cheapest_link(from_city,
+                                               to_city,
+                                               outleg['DepartureDate'][:10])
+
+                links.append({'From': from_city,
+                              'To': to_city,
+                              'IsRound': False,
+                              'Link': link_out})
+
+
+                link_in = get_cheapest_link(to_city,
+                                               from_city,
+                                               inleg['DepartureDate'][:10])
+
+                links.append({'From': to_city,
+                              'To': from_city,
+                              'IsRound': False,
+                              'Link': link_in})
+
+            else:
+                link =  get_cheapest_link(outleg['OriginDetails']['CityId'],
+                                               outleg['DestinationDetails']['CityId'],
+                                               outleg['DepartureDate'][:10],
+                                               inleg['DepartureDate'][:10])
+
+                links.append({'From': from_city,
+                              'To': to_city,
+                              'IsRound': True,
+                              'Link': link})
+
+
+            return links
+
+        links = []
+        for route in solution.routes:
+            links += route2links(route)
+
+        return links
+
+
+
 
 
