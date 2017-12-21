@@ -30,7 +30,7 @@ def process_quotes(response): # Expects dict, use response.json()
 
 @rate_limited(490, 60)
 def search_quotes(origin, destination, outbound, inbound):
-    skyscanner_response = pricer.get_cheapest_quotes(
+    skyscanner_response = pricer.get_cheapest_quote(
             market='RU',
             currency='RUB',
             locale='en-GB',
@@ -50,7 +50,7 @@ def min_roundtrip_price(quotes):
     # Stupid hack to avoid minima of empty lists
 
     min_cost = math.inf
-    cheapest_route = {'InboundLeg':None, 'OutboundLeg':None}
+    cheapest_route = {'InboundLeg':None, 'OutboundLeg':None, 'MinPrice':None, 'MultiTicket': None}
 
     for o in outbounds:
         for i in inbounds:
@@ -59,6 +59,8 @@ def min_roundtrip_price(quotes):
                 min_cost = cost
                 cheapest_route['InboundLeg'] = i['InboundLeg']
                 cheapest_route['OutboundLeg'] = o['OutboundLeg']
+                cheapest_route['MinPrice'] = cost
+                cheapest_route['MultiTicket'] = True
 
     for r in roundtrips:
         cost = r['MinPrice']
@@ -66,12 +68,10 @@ def min_roundtrip_price(quotes):
             min_cost = cost
             cheapest_route['InboundLeg'] = r['InboundLeg']
             cheapest_route['OutboundLeg'] = r['OutboundLeg']
-    #
-    #
-    # multiticket_cost = min([math.inf] + [o['MinPrice'] + i['MinPrice'] for o in outbounds for i in inbounds])
-    # roundtrip_cost = min([math.inf] + [trip['MinPrice'] for trip in roundtrips])
-    
-    # return min(multiticket_cost, roundtrip_cost)
+            cheapest_route['MinPrice'] = cost
+            cheapest_route['MultiTicket'] = False
+
+
     return min_cost, cheapest_route
 
 def random_date(start, end):
