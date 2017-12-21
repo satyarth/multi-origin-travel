@@ -7,13 +7,12 @@ from search import SearchModel
 from solution import Solution
 
 class SimAnnSolver:
-    def __init__(self, date_from, date_to, interactor, jump_callback, newbest_callback, min_days=0):
+    def __init__(self, date_from, date_to, interactor, newbest_callback, min_days=0):
 
         self.interactor = interactor
         self.date_range = (date_from, date_to)
         self.destinations = np.array(list(interactor.cities.keys()))
         self.min_days=min_days
-        self.jump_callback = jump_callback
         self.newbest_callback = newbest_callback
 
     def random_solution(self):
@@ -64,7 +63,6 @@ class SimAnnSolver:
 
             if np.random.random() < np.exp(-obj_delta / T):
                 obj_curr, solution_curr = obj_neighbour, solution_neighbour
-                self.jump_callback(solution_curr)
 
                 if obj_curr < obj_best:
                     obj_best, solution_best = obj_curr, solution_curr
@@ -72,20 +70,13 @@ class SimAnnSolver:
 
             if i % cooling_frequency == 0 and T > T_min:
                 T *= exp_gamma
-                # print("\nITER:{0} TIME:{1} T:{2}".format(i, time.time()-st, T))
-                # print("BEST:{0},{1}\n".format(solution_best, obj_best))
-
-
-            # print(i)
-            # print(solution_neighbour, obj_neighbour)
-            # print(solution_curr, obj_curr)
 
 
 
         return solution_best, obj_best
 
 
-np.random.seed(4)
+np.random.seed(57)
 
 with open("city_ids.json") as f:
     cities = json.load(f)
@@ -103,7 +94,7 @@ nbcb = lambda s: print("New best solution: {0}".format(s))
 
 
 interactor = SkyscannerInteractor(cities, sources)
-solver = SimAnnSolver(date_from, date_to, interactor, jump_callback=jcb, newbest_callback=nbcb, min_days=3)
+solver = SimAnnSolver(date_from, date_to, interactor, newbest_callback=nbcb, min_days=3)
 solution, price = solver.solve(T_0 = 5000, max_iter=400)
 
 print(solution)
