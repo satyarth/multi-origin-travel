@@ -8,13 +8,14 @@ from solution import Solution, FORMAT
 
 
 class SimAnnSolver:
-    def __init__(self, date_from, date_to, interactor, newbest_callback, min_days=0):
+    def __init__(self, date_from, date_to, interactor, newbest_callback, stop_callback, min_days=0):
 
         self.interactor = interactor
         self.date_range = (date_from, date_to)
-        self.destinations = np.array(list(interactor.cities.keys()))
+        self.destinations = interactor.cities
         self.min_days=min_days
         self.newbest_callback = newbest_callback
+        self.stop_callback = stop_callback
 
     def random_solution(self):
         dest = np.random.choice(self.destinations)
@@ -43,7 +44,7 @@ class SimAnnSolver:
 
         return Solution(dest, date_come, date_leave)
 
-    def solve(self, max_iter=500, T_0=5000.0, T_min=0.1, cooling_frequency=10, exp_gamma=0.99):
+    def solve(self, max_iter=400, T_0=5000.0, T_min=0.1, cooling_frequency=10, exp_gamma=0.99):
 
         T = T_0
         solution_curr = self.random_solution()
@@ -56,6 +57,10 @@ class SimAnnSolver:
         st = time.time()
 
         for i in range(max_iter):
+
+            if self.stop_callback():
+                break
+
             solution_neighbour = self.random_neighbour(solution_curr)
             obj_neighbour = self.interactor.get_price(solution_neighbour)
 
@@ -78,25 +83,54 @@ class SimAnnSolver:
         return solution_best, obj_best
 
 
-np.random.seed(57)
+def solve_SA(outbound_date, inbound_date, origins, solution_callback, stop_callback, min_days, city_ids_file='city_ids.json'):
 
-with open("city_ids.json") as f:
-    cities = json.load(f)
+    with open(city_ids_file) as f:
+        cities = list(json.load(f).values())
 
-# sources = list(cities.keys())[18:21]
-sources = ["Berlin", "Brussels", "London"]
+    interactor = SkyscannerInteractor(cities, origins)
+    inbound_date = datetime.datetime.strptime(inbound_date, FORMAT)
+    outbound_date = datetime.datetime.strptime(outbound_date, FORMAT)
 
-print(sources)
-
-date_from = datetime.datetime.strptime("2018-01-01", FORMAT)
-date_to = datetime.datetime.strptime("2018-01-15", FORMAT)
-
-jcb = lambda s: print()
-nbcb = lambda s: print("New best solution: {0}".format(s))
+    solver = SimAnnSolver(outbound_date, inbound_date, interactor, solution_callback, stop_callback, min_days)
+    solver.solve()
 
 
-interactor = SkyscannerInteractor(cities, sources)
-solver = SimAnnSolver(date_from, date_to, interactor, newbest_callback=nbcb, min_days=3)
-solution, price = solver.solve(T_0 = 5000, max_iter=400)
 
-print(solution)
+# np.random.seed(57)
+outdate = "2018-01-01"
+indate = "2018-01-15"
+
+origins = ['LOND', 'BERL', 'BRUS']
+
+solution_cb = lambda s: print(s)
+stop_cb = lambda: False
+
+min_days = 3
+
+solve_SA(outdate, indate, origins, solution_cb, stop_cb, min_days)
+
+
+# np.random.seed(1)
+
+# with open("city_ids.json") as f:
+#     cities = json.load(f)
+#
+#
+# # sources = list(cities.keys())[18:21]
+# sources = ["Berlin", "Brussels", "London"]
+#
+# print(sources)
+#
+# date_from = datetime.datetime.strptime("2018-01-01", FORMAT)
+# date_to = datetime.datetime.strptime("2018-01-15", FORMAT)
+#
+# jcb = lambda s: print()
+# nbcb = lambda s: print("New best solution: {0}".format(s))
+#
+#
+# interactor = SkyscannerInteractor(cities, sources)
+# solver = SimAnnSolver(date_from, date_to, interactor, newbest_callback=nbcb, min_days=3)
+# solution, price = solver.solve(T_0 = 5000, max_iter=400)
+#
+# print(solution)

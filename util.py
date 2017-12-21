@@ -82,27 +82,27 @@ def random_date(start, end):
 
 
 class SkyscannerInteractor:
-    def __init__(self, cities, sources):
+    def __init__(self, cities, origins):
         self.cities = cities
-        self.sources = sources
+        self.origins = origins
 
 
     def get_price(self, solution):
         price = [0,]
         routes = []
 
-        destination_code = self.cities[solution.destination]
+        destination_code = solution.destination
         date_come_str = datetime.strftime(solution.date_come, FORMAT)
         date_leave_str = datetime.strftime(solution.date_leave, FORMAT)
 
         def fetch_price(source):
-            quotes = search_quotes(self.cities[source], destination_code, date_come_str, date_leave_str)
+            quotes = search_quotes(source, destination_code, date_come_str, date_leave_str)
             min_price, route = min_roundtrip_price(quotes)
             routes.append(route)
             price[0] = price[0] + min_price
 
-        pool = ThreadPool(len(self.sources))
-        pool.map(fetch_price, self.sources)
+        pool = ThreadPool(len(self.origins))
+        pool.map(fetch_price, self.origins)
 
         solution.price = price[0]
         solution.routes = routes
