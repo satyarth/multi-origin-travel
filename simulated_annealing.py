@@ -1,5 +1,5 @@
 import numpy as np
-from util import min_roundtrip_price, search_quotes
+from util import min_roundtrip_price, search_quotes, random_date
 import json
 import datetime, time
 import math
@@ -69,14 +69,6 @@ class SimAnnSolver:
         self.date_range = (date_from, date_to)
         self.destinations = np.array(list(interactor.cities.keys()))
         self.min_days=min_days
-
-
-
-    def random_date(self, start, end):
-        prop = np.random.random()
-        ptime = start + prop * (end - start)
-        ptime = ptime.replace(hour=0, minute=0, second=0, microsecond=0)
-        return ptime
 
     def random_solution(self):
         print(type(self.destinations))

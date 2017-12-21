@@ -71,3 +71,8 @@ def min_roundtrip_price(quotes):
     # return min(multiticket_cost, roundtrip_cost)
     return min_cost, cheapest_route
 
+def random_date(self, start, end):
+    prop = np.random.random()
+    ptime = start + prop * (end - start)
+    ptime = ptime.replace(hour=0, minute=0, second=0, microsecond=0)
+    return ptime
