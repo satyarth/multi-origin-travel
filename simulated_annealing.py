@@ -101,14 +101,50 @@ def solve_SA(outbound_date, inbound_date, origins, solution_callback, stop_callb
 outdate = "2018-01-01"
 indate = "2018-01-15"
 
-origins = ['LOND', 'BERL', 'BRUS']
+origins = ['RIGA', 'BUDA', 'MOSC']
 
 solution_cb = lambda s: print(s)
 stop_cb = lambda: False
 
 min_days = 3
 
-solve_SA(outdate, indate, origins, solution_cb, stop_cb, min_days)
+with open('city_ids.json') as f:
+    cities = list(json.load(f).values())
+
+interactor = SkyscannerInteractor(cities, origins)
+inbound_date = datetime.datetime.strptime(indate, FORMAT)
+outbound_date = datetime.datetime.strptime(outdate, FORMAT)
+
+solver = SimAnnSolver(outbound_date, inbound_date, interactor, solution_cb, stop_cb, min_days)
+
+sol = solver.random_solution()
+
+from skyscanner.skyscanner import Flights
+from secret import key
+from  util import process_quotes
+
+pricer = Flights(key)
+# pricer.
+skyscanner_response = pricer.get_result(
+    country='RU',
+    currency='RUB',
+    locale='en-GB',
+    originplace='RIGA-sky',
+    destinationplace='BUDA-sky',
+    outbounddate='2018-01-03',
+    inbounddate='2018-01-06',
+    adults=1).parsed
+
+def cheapest_link(response):
+    itinerary = response['itinaries'][0]
+    link = itinerary['BookingDetailsLink']['Uri']
+
+
+# proc = process_quotes(skyscanner_response)
+
+print(skyscanner_response)
+
+# solve_SA(outdate, indate, origins, solution_cb, stop_cb, min_days)
 
 
 # np.random.seed(1)
