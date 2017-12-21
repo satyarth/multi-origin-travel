@@ -1,7 +1,9 @@
 from skyscanner.skyscanner import FlightsCache
 from ratelimit import rate_limited
+from datetime import datetime
 import math
 import numpy as np
+from multiprocessing.dummy import Pool as ThreadPool
 
 from secret import key
 
@@ -77,3 +79,34 @@ def random_date(start, end):
     ptime = start + prop * (end - start)
     ptime = ptime.replace(hour=0, minute=0, second=0, microsecond=0)
     return ptime
+
+
+class SkyscannerInteractor:
+    def __init__(self, cities, sources):
+        self.cities = cities
+        self.sources = sources
+
+
+    def get_price(self, solution):
+        price = [0,]
+        routes = []
+
+        destination_code = self.cities[solution.destination]
+        date_come_str = datetime.strftime(solution.date_come, FORMAT)
+        date_leave_str = datetime.strftime(solution.date_leave, FORMAT)
+
+        def fetch_price(source):
+            quotes = search_quotes(self.cities[source], destination_code, date_come_str, date_leave_str)
+            min_price, route = min_roundtrip_price(quotes)
+            routes.append(route)
+            price[0] = price[0] + min_price
+
+        pool = ThreadPool(len(self.sources))
+        pool.map(fetch_price, self.sources)
+
+        solution.price = price[0]
+        solution.routes = routes
+
+        return price[0]
+
+FORMAT = "%Y-%m-%d"
