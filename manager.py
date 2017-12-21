@@ -17,7 +17,7 @@ class SolutionManager:
         self.solution_processor(self.current_id, solution)
         self.current_id += 1
 
-    def solve(self, outbound_date, inbound_date, origins, min_days):
+    def solve(self, outbound_date, inbound_date, origins, min_days=0):
         self.solve_func(outbound_date, inbound_date, origins, self.stop_func, self.store_solution, min_days)
 
     def get_links(self, solution):
