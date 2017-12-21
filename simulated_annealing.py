@@ -1,5 +1,5 @@
 import numpy as np
-from util import min_roundtrip_price, search_quotes
+from util import min_roundtrip_price, search_quotes, random_date
 import json
 import datetime, time
 import math
@@ -48,18 +48,10 @@ class SimAnnSolver:
         self.min_days=min_days
         self.newbest_callback = newbest_callback
 
-
-
-    def random_date(self, start, end):
-        prop = np.random.random()
-        ptime = start + prop * (end - start)
-        ptime = ptime.replace(hour=0, minute=0, second=0, microsecond=0)
-        return ptime
-
     def random_solution(self):
         dest = np.random.choice(self.destinations)
-        date_come = self.random_date(*self.date_range)
-        date_leave = self.random_date(date_come, self.date_range[1])
+        date_come = random_date(*self.date_range)
+        date_leave = random_date(date_come, self.date_range[1])
 
         out = Solution(dest, date_come, date_leave)
 
@@ -76,9 +68,9 @@ class SimAnnSolver:
         if chance < 1./3:
             dest = np.random.choice(self.destinations)
         elif chance < 2./3:
-            date_come = self.random_date(self.date_range[0], date_leave-days_gap)
+            date_come = random_date(self.date_range[0], date_leave-days_gap)
         else:
-            date_leave = self.random_date(date_come+days_gap, self.date_range[1])
+            date_leave = random_date(date_come+days_gap, self.date_range[1])
 
         return Solution(dest, date_come, date_leave)
 
