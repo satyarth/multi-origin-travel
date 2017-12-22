@@ -105,7 +105,7 @@ def solve_branch_and_bound(outbd, inbd, origins, solution_callback=None, stop_ca
                 best_feasible_solution[0] = feasible_sol
 
                 if solution_callback:
-                    solution_callback(best_feasible_solution)
+                    solution_callback(best_feasible_solution[0])
             
     tryConstraints()
     
