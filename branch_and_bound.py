@@ -1,9 +1,6 @@
 from solution import Solution
 from datetime import datetime
-from vadim_interactor import place_ids, as_python_date, search_quotes
-
-def as_date(date_time):
-    return date_time.rsplit('T')[0]
+from vadim_interactor import *
 
 def same_city(place1, place2):
     place1ids = place_ids(place1)
@@ -20,15 +17,6 @@ def date_inside(candidate_date, containing_date):
         return True
     
     return candidate_date.startswith(containing_date)
-
-def all_destinations(* quotes):
-    return [quote['OutboundLeg']['DestinationDetails'] for quote in quotes]
-def all_outbound_dates(* quotes):
-    return [quote['OutboundLeg']['DepartureDate'] for quote in quotes]
-def all_inbound_dates(* quotes):
-    return [quote['InboundLeg']['DepartureDate'] for quote in quotes]
-def all_dates(* quotes):
-    return [(quote['OutboundLeg']['DepartureDate'], quote['InboundLeg']['DepartureDate']) for quote in quotes]
 
 def feasible_solution(* quotes):
     destinations = all_destinations(*quotes)
