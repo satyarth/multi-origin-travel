@@ -27,6 +27,9 @@ def start(bot, update):
     if chat_id in solution_managers:
         solution_managers.pop(chat_id)
 
+    if chat_id in expecting_id:
+        expecting_id.pop(chat_id)
+
     bot.sendMessage(update.message.chat_id, 
                     text=dedent('''\
                                 Hi!
@@ -128,7 +131,18 @@ def davai(bot, update):
     solution_managers[chat_id].solve(dates[chat_id][0], dates[chat_id][1], origins[chat_id])
 
 def stop(bot, update):
-    pass
+    chat_id = update.message.chat_id
+    if chat_id in solution_managers:
+        solution_managers[chat_id].stop = True
+        bot.sendMessage(chat_id, text="Okay, I'll stop looking now. Start me again with /start")
+        get_favourite(bot, chat_id)
+        return
+
+    bot.sendMessage(chat_id, text="Erm, nothing to stop...?")
+
+def get_favourite(bot, chat_id):
+    bot.sendMessage(chat_id, text="Pick your favourite solution and I'll share links to book it :D")
+    expecting_id[chat_id] = True
 
 def main():
     updater = Updater(telegram_key)
@@ -138,6 +152,7 @@ def main():
     dp.add_handler(CommandHandler("origin", add_origin))
     dp.add_handler(CommandHandler("dates", get_dates))
     dp.add_handler(CommandHandler("davai", davai))
+    dp.add_handler(CommandHandler("stop", stop))
     # dp.add_error_handler(error)
     updater.start_polling()
     updater.idle()
@@ -147,4 +162,5 @@ if __name__ == '__main__':
     origins = dict()
     dates = dict()
     solution_managers = dict()
+    expecting_id = dict()
     main()
