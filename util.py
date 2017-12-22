@@ -1,7 +1,6 @@
 from skyscanner.skyscanner import FlightsCache, Flights
 from ratelimit import rate_limited
 from datetime import datetime
-import math
 import numpy as np
 from multiprocessing.dummy import Pool as ThreadPool
 
@@ -49,7 +48,7 @@ def min_roundtrip_price(quotes):
     
     # Stupid hack to avoid minima of empty lists
 
-    min_cost = math.inf
+    min_cost = float('inf')
     cheapest_route = {}
 
     for o in outbounds:

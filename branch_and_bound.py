@@ -1,4 +1,3 @@
-import math
 from solution import Solution
 from datetime import datetime
 from vadim_interactor import place_ids, as_python_date, search_quotes
@@ -72,7 +71,7 @@ def lower_bound(origins, dates=('anytime', 'anytime'), destination='anywhere',
         quotes = list(filter(allowed, quotes))
         
         if len(quotes) == 0:
-            return math.inf, None
+            return float('inf'), None
         
         best_quote = quotes[0] # they are pre-sorted, see search_quotes()
         solution.append(best_quote)
@@ -84,7 +83,7 @@ def solve_branch_and_bound(outbd, inbd, origins, solution_callback=None, stop_ca
     required_dates = (outbd, inbd)
     leaf_solutions = []
     best_feasible_solution = [Solution('anywhere', 'anytime', 'anytime')]
-    best_feasible_solution[0].price = math.inf
+    best_feasible_solution[0].price = float('inf')
     
     def tryConstraints(dates=('anytime', 'anytime'), destination='anywhere', 
                        tabu_destinations=[], tabu_dates=[]):
