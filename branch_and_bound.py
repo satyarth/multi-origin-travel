@@ -107,7 +107,7 @@ def solve_branch_and_bound(outbd, inbd, origins, solution_callback=None, stop_ca
                 if solution_callback:
                     solution_callback(best_feasible_solution[0])
             
-    tryConstraints()
+    tryConstraints(required_dates)
     
     while not (stop_callback and stop_callback()):
         best_solution = min(leaf_solutions, key=lambda solution: solution['price'])
