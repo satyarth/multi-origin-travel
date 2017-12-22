@@ -115,7 +115,7 @@ def get_dates(bot, update):
 
 def get_solution_processor(bot, chat_id):
     def solution_processor(id, solution):
-        msg = str(id) + solution.destination + solution.date_come.strftime(FORMAT) + solution.date_leave.strftime(FORMAT)
+        msg = "id: " + str(id) +"\nDestination city_id: " + solution.destination + "\nOutbound date: " + solution.date_come.strftime(FORMAT) + "\nInbound date: "+ solution.date_leave.strftime(FORMAT)+ "\nPrice: " + str(solution.price) + " rubles"
         bot.sendMessage(chat_id, text=msg)
 
     return solution_processor
