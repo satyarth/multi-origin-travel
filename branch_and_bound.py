@@ -80,7 +80,9 @@ def lower_bound(origins, dates=('anytime', 'anytime'), destination='anywhere',
             
     return price, solution
 
-def solve_branch_and_bound(origins, required_dates, solution_callback=None, stop_callback=None):
+
+def solve_branch_and_bound(outbd, inbd, origins, solution_callback=None, stop_callback=None):
+    required_dates = (outbd, inbd)
     leaf_solutions = []
     best_feasible_solution = [Solution('anywhere', 'anytime', 'anytime')]
     best_feasible_solution[0].price = math.inf
