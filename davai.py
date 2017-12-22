@@ -133,7 +133,7 @@ def davai(bot, update):
 def stop(bot, update):
     chat_id = update.message.chat_id
     if chat_id in solution_managers:
-        solution_managers[chat_id].stop = True
+        solution_managers[chat_id].stopped = True
         bot.sendMessage(chat_id, text="Okay, I'll stop looking now. Start me again with /start")
         get_favourite(bot, chat_id)
         return
