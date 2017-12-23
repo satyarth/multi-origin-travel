@@ -144,6 +144,32 @@ def get_favourite(bot, chat_id):
     bot.sendMessage(chat_id, text="Pick your favourite solution and I'll share links to book it :D")
     expecting_id[chat_id] = True
 
+def pick(bot, update):
+    chat_id = update.message.chat_id
+    if chat_id not in expecting_id:
+        bot.sendMessage(chat_id, text="I don't remember finding any solutions for you. Retry with /start?")
+        return
+
+    msg = update.message.text.lstrip("/pick").strip()
+
+    solution_ids = [int(solution_id) for solution_id in msg.split(' ')]
+    print(solution_ids)
+
+    solutions = solution_managers[chat_id].solutions
+    bot.sendMessage(chat_id, text="I'm on it, gimme a sec...")
+
+    for solution_id in solution_ids:
+        solution = solutions[solution_id]
+        link_dicts = solution_managers[chat_id].get_links(solution)
+        reply = 'Booking links for solution ' + str(solution_id) + ': \n'
+        for link_dict in link_dicts:
+            reply += "[click me]("+link_dict['Link'] + ')\n'
+
+        bot.sendMessage(chat_id, text=reply, parse_mode='Markdown')
+
+def error(bot, update, error):
+    logger.warn('Update "%s" caused error "%s"' % (update, error))
+
 def main():
     updater = Updater(telegram_key)
 
@@ -153,7 +179,8 @@ def main():
     dp.add_handler(CommandHandler("dates", get_dates))
     dp.add_handler(CommandHandler("davai", davai))
     dp.add_handler(CommandHandler("stop", stop))
-    # dp.add_error_handler(error)
+    dp.add_handler(CommandHandler("pick", pick))
+    dp.add_error_handler(error)
     updater.start_polling()
     updater.idle()
 
