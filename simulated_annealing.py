@@ -92,35 +92,35 @@ def solve_SA(outbound_date, inbound_date, origins, solution_callback, stop_callb
     return solver.solve(max_iter=100)[0]
 
 
+if __name__ == '__main__':
+    # np.random.seed(57)
+    outdate = "2018-01-01"
+    indate = "2018-01-15"
 
-# np.random.seed(57)
-outdate = "2018-01-01"
-indate = "2018-01-15"
+    origins = ['RIGA', 'BUDA', 'MOSC']
 
-origins = ['RIGA', 'BUDA', 'MOSC']
+    solution_cb = lambda s: print(s)
+    stop_cb = lambda: False
 
-solution_cb = lambda s: print(s)
-stop_cb = lambda: False
+    min_days = 3
 
-min_days = 3
+    with open('city_ids.json') as f:
+        cities = list(json.load(f).values())
 
-with open('city_ids.json') as f:
-    cities = list(json.load(f).values())
+    interactor = SkyscannerInteractor(cities, origins)
+    inbound_date = datetime.datetime.strptime(indate, FORMAT)
+    outbound_date = datetime.datetime.strptime(outdate, FORMAT)
 
-interactor = SkyscannerInteractor(cities, origins)
-inbound_date = datetime.datetime.strptime(indate, FORMAT)
-outbound_date = datetime.datetime.strptime(outdate, FORMAT)
-
-solver = SimAnnSolver(outbound_date, inbound_date, interactor, solution_cb, stop_cb, min_days)
+    solver = SimAnnSolver(outbound_date, inbound_date, interactor, solution_cb, stop_cb, min_days)
 
 
 
-sol = solve_SA(outdate, indate, origins, solution_cb, stop_cb, min_days)
+    sol = solve_SA(outdate, indate, origins, solution_cb, stop_cb, min_days)
 
-from manager import SolutionManager
+    from manager import SolutionManager
 
-sm = SolutionManager(1,2)
+    sm = SolutionManager(1,2)
 
-links = sm.get_links(sol)
+    links = sm.get_links(sol)
 
-print(links)
+    print(links)

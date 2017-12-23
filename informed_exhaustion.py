@@ -6,7 +6,7 @@ import math
 with open('best_dests.pickle', 'rb') as b:
     best_dests = pickle.load(b)
 
-def search_informed_exhaustive(outbound, inbound, origins, solution_callback=None, stop_callback=None):
+def solve_informed_exhaustion(outbound, inbound, origins, solution_callback=None, stop_callback=None):
     best_solution = Solution('anywhere', 'anytime', 'anytime')
     best_solution.price = math.inf
     
