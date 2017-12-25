@@ -33,7 +33,13 @@ def start(bot, update):
     bot.sendMessage(update.message.chat_id, 
                     text=dedent('''\
                                 Hi!
-                                (Instructions go here)
+                                First, pick origin cities with /origin [name]
+                                e.g. /origin moscow
+                                Then pick dates with /dates
+                                e.g. /dates 2018-01 2018-03
+                                or /dates anytime
+                                Then start optimizing with /davai
+                                When you see something you like, hit /stop and use /pick to get the booking links for your preferred solution.
                                 Davai!'''))
 
 def completed(bot, chat_id):
