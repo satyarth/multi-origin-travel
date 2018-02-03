@@ -79,7 +79,8 @@ class SimAnnSolver:
         return solution_best, obj_best
 
 
-def solve_SA(outbound_date, inbound_date, origins, solution_callback, stop_callback, min_days, city_ids_file='city_ids.json'):
+def solve_SA(origins, dates, destination, tabu_dates, tabu_destinations, solution_callback, stop_callback, min_days=0, city_ids_file='city_ids.json'):
+    outbound_date, inbound_date = dates
 
     with open(city_ids_file) as f:
         cities = list(json.load(f).values())

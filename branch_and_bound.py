@@ -67,8 +67,14 @@ def lower_bound(origins, dates=('anytime', 'anytime'), destination='anywhere',
             
     return price, solution
 
-def solve_branch_and_bound(outbd, inbd, origins, solution_callback=None, stop_callback=None):
-    required_dates = (outbd, inbd)
+def solve_branch_and_bound( origins, 
+                            dates=('anytime', 'anytime'), 
+                            destination='anywhere',
+                            tabu_dates=[],
+                            tabu_destinations=[], 
+                            solution_callback=None, 
+                            stop_callback=None ):
+    
     leaf_solutions = []
     best_feasible_solution = [Solution('anywhere', 'anytime', 'anytime')]
     best_feasible_solution[0].price = float('inf')
@@ -94,7 +100,7 @@ def solve_branch_and_bound(outbd, inbd, origins, solution_callback=None, stop_ca
                 if solution_callback:
                     solution_callback(best_feasible_solution[0])
             
-    tryConstraints(required_dates)
+    tryConstraints(dates, destination, tabu_destinations, tabu_dates)
     
     while not (stop_callback and stop_callback()):
         best_solution = min(leaf_solutions, key=lambda solution: solution['price'])
@@ -109,7 +115,7 @@ def solve_branch_and_bound(outbd, inbd, origins, solution_callback=None, stop_ca
         for destination, tabu_destinations in zip(destinations + ['anywhere'],
                                                   [[] for d in destinations] + 
                                                   [best_solution['tabu_destinations'] + destinations]):
-            for date_pair, tabu_date_pairs in zip(date_pairs + [required_dates],
+            for date_pair, tabu_date_pairs in zip(date_pairs + [dates],
                                                   [[] for d in date_pairs] + 
                                                   [best_solution['tabu_dates'] + date_pairs]):             
                 tryConstraints(date_pair, destination, tabu_destinations, tabu_date_pairs)

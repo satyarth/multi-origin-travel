@@ -148,7 +148,7 @@ def davai(bot, update):
     chat_id = update.message.chat_id
     sp = get_solution_processor(bot, chat_id)
     solution_managers[chat_id] = SolutionManager(solve_branch_and_bound, sp)
-    solution_managers[chat_id].solve(dates[chat_id][0], dates[chat_id][1], origins[chat_id])
+    solution_managers[chat_id].solve(origins[chat_id], dates[chat_id])
 
 def stop(bot, update):
     chat_id = update.message.chat_id
