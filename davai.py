@@ -1,4 +1,4 @@
-from telegram.ext import Updater, CommandHandler, Job
+from telegram.ext import Updater, CommandHandler, Job, MessageHandler, Filters
 from telegram.ext.dispatcher import run_async
 
 from textwrap import dedent
@@ -46,9 +46,15 @@ def completed(bot, chat_id):
     if chat_id in dates and chat_id in origins:
         bot.sendMessage(chat_id, text="You're good to go! Start me with /davai")
 
-def add_origin(bot, update):
+def add_origin(bot, update, args):
     chat_id = update.message.chat_id
-    city_name = update.message.text.lstrip('/addorigin').strip()
+    
+    if len(args) == 0:
+        bot.sendMessage(chat_id, text='Enter city, airport or country')
+        proceed_handlers[chat_id] = lambda city: add_origin(bot, update, [city])
+        return
+    
+    city_name = args[0]
 
     try:
         city_id = get_city_id(city_name)
@@ -69,11 +75,9 @@ def add_origin(bot, update):
                     text=city_name + " (City ID: " + city_id + ") added. All good in da hood!\n Currently on the list: " + str(origins[chat_id]))
     completed(bot, chat_id)
 
-def get_dates(bot, update):
+def get_dates(bot, update, args):
     print("AYY")
     chat_id = update.message.chat_id
-    msg = update.message.text.lstrip('/dates').strip()
-    print(msg)
 
     error_msg = '''Dates aren't in the right format. Examples of valid dates:
                    anytime
@@ -82,15 +86,25 @@ def get_dates(bot, update):
 
     success_msg = 'All good! Dates: '
 
-    if msg.lower() == 'anytime':
+    if len(args) == 0:
+        bot.sendMessage(chat_id, text='When do you want to leave? [anytime/2012-12-21/2012-12]')
+        proceed_handlers[chat_id] = lambda date: get_dates(bot, update, [date])
+        return
+
+    if args[0].lower() == 'anytime':
         dates[chat_id] = ['anytime', 'anytime']
         bot.sendMessage(chat_id,
                     text="Anytime, huh? You're an eager one!")
         completed(bot, chat_id)
         return
 
-    if len(msg.split(' ')) == 2:
-        [outbound, inbound] = msg.split(' ')
+    if len(args) == 1:
+        bot.sendMessage(chat_id, text='When do you want to return? [anytime/2012-12-21/2012-12]')
+        proceed_handlers[chat_id] = lambda date: get_dates(bot, update, args + [date])
+        return
+
+    if len(args) == 2:
+        [outbound, inbound] = args
         if len(outbound) == len(inbound):
             if outbound <= inbound:
                 if len(outbound) == 7:
@@ -176,16 +190,26 @@ def pick(bot, update):
 def error(bot, update, error):
     logger.warn('Update "%s" caused error "%s"' % (update, error))
 
+def proceed(bot, update):
+    handler = proceed_handlers[update.message.chat_id]
+    if handler:
+        handler(update.message.text)
+        if proceed_handlers[update.message.chat_id] == handler:
+            proceed_handlers[update.message.chat_id] = None
+    else:
+        bot.sendMessage(update.message.chat_id, text='wat?')
+
 def main():
     updater = Updater(telegram_key)
 
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("origin", add_origin))
-    dp.add_handler(CommandHandler("dates", get_dates))
+    dp.add_handler(CommandHandler("origin", add_origin, pass_args=True))
+    dp.add_handler(CommandHandler("dates", get_dates, pass_args=True))
     dp.add_handler(CommandHandler("davai", davai))
     dp.add_handler(CommandHandler("stop", stop))
     dp.add_handler(CommandHandler("pick", pick))
+    dp.add_handler(MessageHandler(Filters.text, proceed))
     dp.add_error_handler(error)
     updater.start_polling()
     updater.idle()
@@ -196,4 +220,5 @@ if __name__ == '__main__':
     dates = dict()
     solution_managers = dict()
     expecting_id = dict()
+    proceed_handlers = dict()
     main()
