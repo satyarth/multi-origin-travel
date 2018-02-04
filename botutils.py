@@ -5,24 +5,26 @@ from secret import key
 class NotFound(Exception):
 	pass
 
-def get_city_id(city_name):
-	def query_string(city_name):
+def query_string(query):
 	    locale = 'en-GB'
 	    country = 'UK'
-	    query = "Moscow"
 	    currency = "GBP"
 	    
 	    return "http://partners.api.skyscanner.net/apiservices/autosuggest/v1.0/" + \
 	                country + "/" + \
 	                currency+ "/" + \
 	                locale + \
-	                "?query=" + city_name + \
+	                "?query=" + query + \
 	                "&apiKey=" + key
 
-	r = requests.get(query_string(city_name)).json()
+def get_place(query):
+	r = requests.get(query_string(query)).json()
 
 	try:
-		return r['Places'][0]['CityId'][:-4]
+		return r['Places'][0]
 
 	except IndexError:
 		raise NotFound()
+
+def get_city_id(city_name):
+	return get_place(city_name)['CityId'][:-4]

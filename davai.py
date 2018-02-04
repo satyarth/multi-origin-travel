@@ -6,7 +6,7 @@ from datetime import datetime
 
 from branch_and_bound import solve_branch_and_bound
 from manager import SolutionManager
-from botutils import get_city_id, NotFound
+from botutils import get_place, NotFound
 from secret import telegram_key
 
 from util import FORMAT
@@ -53,9 +53,9 @@ def add_origins(bot, update, args):
         proceed_handlers[chat_id] = lambda cities: add_origins(bot, update, cities.split(' '))
         return
     
-    for city_name in args:
+    for query in args:
         try:
-            city_id = get_city_id(city_name)
+            place = get_place(query)
 
         except NotFound:
             bot.sendMessage(chat_id, text=dedent('''We couldn't find a city by that name. Sad!
@@ -64,13 +64,12 @@ def add_origins(bot, update, args):
             continue
 
         try:
-            origins[chat_id].append(city_id)
-
+            origins[chat_id].append(place)
         except KeyError:
-            origins[chat_id] = [city_id]
+            origins[chat_id] = [place]
 
         bot.sendMessage(chat_id,
-                        text=city_name + " (City ID: " + city_id + ") added. All good in da hood!\n Currently on the list: " + str(origins[chat_id]))
+                        text=place['PlaceName'] + " added. All good in da hood!")
     completed(bot, chat_id)
 
 def get_dates(bot, update, args):
@@ -146,10 +145,10 @@ def get_solution_processor(bot, chat_id):
         return map(route2link, solution.routes)
 
     def solution_processor(id, solution):
-        msg = "id: " + str(id) + "\nDestination city_id: " + solution.destination \
-                               + "\nOutbound date: " + solution.date_come.strftime(FORMAT) \
-                               + "\nInbound date: "+ solution.date_leave.strftime(FORMAT) \
-                               + "\nFrom " + str(solution.price) + " rubles"
+        msg = solution.destination_city or solution.destination
+        msg += " from " + str(solution.price) + " roubles"
+        msg += "\nOutbound date: " + solution.date_come.strftime(FORMAT)
+        msg += "\nInbound date: "+ solution.date_leave.strftime(FORMAT)
         for link in get_links_to_links(solution):
             msg += '\n' + link
         bot.sendMessage(chat_id, text=msg)
@@ -161,7 +160,7 @@ def davai(bot, update):
     chat_id = update.message.chat_id
     sp = get_solution_processor(bot, chat_id)
     solution_managers[chat_id] = SolutionManager(solve_branch_and_bound, sp)
-    solution_managers[chat_id].solve(origins[chat_id], dates[chat_id])
+    solution_managers[chat_id].solve([o['PlaceId'] for o in origins[chat_id]], dates[chat_id])
 
 def stop(bot, update):
     chat_id = update.message.chat_id
@@ -217,6 +216,7 @@ def main():
 
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("origin", add_origins, pass_args=True))
     dp.add_handler(CommandHandler("origins", add_origins, pass_args=True))
     dp.add_handler(CommandHandler("dates", get_dates, pass_args=True))
     dp.add_handler(CommandHandler("davai", davai))

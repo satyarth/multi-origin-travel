@@ -34,6 +34,7 @@ def feasible_solution(* quotes):
         solution = Solution(place_ids(destinations[0])[0], as_python_date(outbounds[0]), as_python_date(inbounds[0]))
         solution.routes = quotes
         solution.price = sum(quote['MinPrice'] for quote in quotes)
+        solution.destination_city = destinations[0]['CityName']
     
     return solution
 
