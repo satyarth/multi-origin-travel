@@ -58,7 +58,7 @@ def status(bot, update):
         msg += "\n"
         msg += "\n/destination - specify where you're headed (if you don't, we'll find cheapest destinations for you"
         msg += "\n/nondestinations - add veto places, in case there are places you want to avoid at all costs"
-        msg += "\n/dates - change the dates when you want to travel. Anytime? 2018? 2018-02? 2018-02-15?"
+        msg += "\n/dates - change the dates of your trip. Anytime? 2018? 2018-02? 2018-02-15?"
         msg += "\n/origins - add more origin cities"
         msg += "\n/start - start everything from scratch"
         msg += "\n\n/davai - sounds good, start the search!"
@@ -221,7 +221,7 @@ def get_solution_processor(bot, chat_id):
 
 @run_async
 def davai(bot, update):
-    bot.sendMessage("My army of bots has started their investigation. They will keep going until you order to /stop")
+    bot.sendMessage(update.message.chat_id, text="My army of bots has started their investigation. They will keep going until you order to /stop")
     chat_id = update.message.chat_id
     sp = get_solution_processor(bot, chat_id)
     solution_managers[chat_id] = SolutionManager(solve_branch_and_bound, sp)
@@ -242,29 +242,6 @@ def stop(bot, update):
 def get_favourite(bot, chat_id):
     bot.sendMessage(chat_id, text="Pick your favourite solution and I'll share links to book it :D")
     expecting_id[chat_id] = True
-
-def pick(bot, update):
-    chat_id = update.message.chat_id
-    if chat_id not in expecting_id:
-        bot.sendMessage(chat_id, text="I don't remember finding any solutions for you. Retry with /start?")
-        return
-
-    msg = update.message.text.lstrip("/pick").strip()
-
-    solution_ids = [int(solution_id) for solution_id in msg.split(' ')]
-    print(solution_ids)
-
-    solutions = solution_managers[chat_id].solutions
-    bot.sendMessage(chat_id, text="I'm on it, gimme a sec...")
-
-    for solution_id in solution_ids:
-        solution = solutions[solution_id]
-        link_dicts = solution_managers[chat_id].get_links(solution)
-        reply = 'Booking links for solution ' + str(solution_id) + ': \n'
-        for link_dict in link_dicts:
-            reply += "[click me]("+link_dict['Link'] + ')\n'
-
-        bot.sendMessage(chat_id, text=reply, parse_mode='Markdown')
 
 def error(bot, update, error):
     logger.warn('Update "%s" caused error "%s"' % (update, error))
@@ -291,7 +268,6 @@ def main():
     dp.add_handler(CommandHandler("destination", add_destination, pass_args=True))
     dp.add_handler(CommandHandler("davai", davai))
     dp.add_handler(CommandHandler("stop", stop))
-    dp.add_handler(CommandHandler("pick", pick))
     dp.add_handler(MessageHandler(Filters.text, proceed))
     dp.add_error_handler(error)
     updater.start_polling()
