@@ -7,16 +7,17 @@ from secret import key
 pricer = FlightsCache(key)
 
 def place_ids(place):
+    if isinstance(place, str) or isinstance(place, int):
+        return [place]
+
     place_attrs = []
     
     for attr_name in ['CityId', 'IATACode', 'SkyscannerCode', 'PlaceId']:
-        try:
-            place_attrs.append(place[attr_name])
-        except Exception:
-            pass
-        
-    if len(place_attrs) == 0:
-        place_attrs.append(place)
+        attr = place.get(attr_name)
+        if isinstance(attr, str):
+            attr = attr.replace('-sky', '')
+        if attr:
+            place_attrs.append(attr)
         
     return place_attrs
 
