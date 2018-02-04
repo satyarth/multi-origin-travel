@@ -137,8 +137,23 @@ def get_dates(bot, update, args):
     bot.sendMessage(chat_id, text=dedent(error_msg))
 
 def get_solution_processor(bot, chat_id):
+    def get_links_to_links(solution):
+        def route2link(route):
+            return 'https://www.skyscanner.ru/transport/flights' \
+                   + '/' + route['OutboundLeg']['OriginDetails']['CityId'] \
+                   + '/' + route['InboundLeg']['OriginDetails']['CityId'] \
+                   + '/' + route['OutboundLeg']['DepartureDate'].replace('-', '')[2:8] \
+                   + '/' + route['InboundLeg']['DepartureDate'].replace('-', '')[2:8]
+        
+        return map(route2link, solution.routes)
+
     def solution_processor(id, solution):
-        msg = "id: " + str(id) +"\nDestination city_id: " + solution.destination + "\nOutbound date: " + solution.date_come.strftime(FORMAT) + "\nInbound date: "+ solution.date_leave.strftime(FORMAT)+ "\nPrice: " + str(solution.price) + " rubles"
+        msg = "id: " + str(id) + "\nDestination city_id: " + solution.destination \
+                               + "\nOutbound date: " + solution.date_come.strftime(FORMAT) \
+                               + "\nInbound date: "+ solution.date_leave.strftime(FORMAT) \
+                               + "\nFrom " + str(solution.price) + " rubles"
+        for link in get_links_to_links(solution):
+            msg += '\n' + link
         bot.sendMessage(chat_id, text=msg)
 
     return solution_processor
