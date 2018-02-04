@@ -17,17 +17,14 @@ logging.basicConfig(level=logging.DEBUG,
 
 def start(bot, update):
     chat_id = update.message.chat_id
-    
-    if chat_id in origins:
-        origins.pop(chat_id)
-        
-    dates[chat_id] = ('anytime', 'anytime')
-        
-    if chat_id in solution_managers:
-        solution_managers.pop(chat_id)
 
-    if chat_id in expecting_id:
-        expecting_id.pop(chat_id)    
+    dates[chat_id] = ('anytime', 'anytime')
+    tabu_destinations[chat_id] = []
+    origins[chat_id] = []
+
+    solution_managers.pop(chat_id, None)
+    expecting_id.pop(chat_id, None)
+    destinations.pop(chat_id, None)
 
     bot.sendMessage(update.message.chat_id, 
                     text=dedent('''\
@@ -45,6 +42,10 @@ def completed(bot, chat_id):
     if chat_id in dates and chat_id in origins:
         bot.sendMessage(chat_id, text="You're good to go! Start me with /davai")
 
+city_not_found = '''We couldn't find a city by that name. Sad!
+                    Usage: /origin [cityname]
+                    Example: /origin Moscow'''
+
 def add_origins(bot, update, args):
     chat_id = update.message.chat_id
     
@@ -58,18 +59,55 @@ def add_origins(bot, update, args):
             place = get_place(query)
 
         except NotFound:
-            bot.sendMessage(chat_id, text=dedent('''We couldn't find a city by that name. Sad!
-                                                    Usage: /origin [cityname]
-                                                    Example: /origin Moscow'''))
+            bot.sendMessage(chat_id, text=dedent(city_not_found))
             continue
 
-        try:
-            origins[chat_id].append(place)
-        except KeyError:
-            origins[chat_id] = [place]
+        origins[chat_id].append(place)
 
         bot.sendMessage(chat_id,
                         text=place['PlaceName'] + " added. All good in da hood!")
+    completed(bot, chat_id)
+
+def add_destination(bot, update, args):
+    chat_id = update.message.chat_id
+
+    if len(args) == 0:
+        bot.sendMessage(chat_id, text="Are you set on a particular destination? Give me your destination city or 'anywhere'")
+        proceed_handlers[chat_id] = lambda dest: add_destination(bot, update, dest)
+        return
+
+    try:
+        place = get_place(args[0])
+        destinations[chat_id] = place
+        bot.sendMessage(chat_id, text='Going to ' + place['PlaceName'] + '. Roger!')
+    except NotFound:
+        bot.sendMessage(chat_id, text=dedent(city_not_found))
+        proceed_handlers[chat_id] = lambda dest: add_destination(bot, update, dest)
+        return
+    
+    completed(bot, chat_id)
+
+def add_tabu_destinations(bot, update, args):
+    chat_id = update.message.chat_id
+
+    if len(args) == 0:
+        bot.sendMessage(chat_id, text="Are there places you definitely DON'T want to go to?")
+        proceed_handlers[chat_id] = lambda tabus: add_tabu_destinations(bot, update, tabus.split(' '))
+        return
+
+    for query in args:
+        try:
+            place = get_place(query)
+
+        except NotFound:
+            bot.sendMessage(chat_id, text=dedent(city_not_found))
+            continue
+
+        tabu_destinations[chat_id].append(place)
+
+        bot.sendMessage(chat_id,
+                        text=place['PlaceName'] + " will not happen. I promise!")
+    
     completed(bot, chat_id)
 
 def get_dates(bot, update, args):
@@ -160,7 +198,9 @@ def davai(bot, update):
     chat_id = update.message.chat_id
     sp = get_solution_processor(bot, chat_id)
     solution_managers[chat_id] = SolutionManager(solve_branch_and_bound, sp)
-    solution_managers[chat_id].solve([o['PlaceId'] for o in origins[chat_id]], dates[chat_id])
+    solution_managers[chat_id].solve(origins[chat_id], dates[chat_id],
+                                     tabu_destinations=tabu_destinations[chat_id],
+                                     destination= destinations[chat_id] if chat_id in destinations else 'anywhere')
 
 def stop(bot, update):
     chat_id = update.message.chat_id
@@ -219,6 +259,9 @@ def main():
     dp.add_handler(CommandHandler("origin", add_origins, pass_args=True))
     dp.add_handler(CommandHandler("origins", add_origins, pass_args=True))
     dp.add_handler(CommandHandler("dates", get_dates, pass_args=True))
+    dp.add_handler(CommandHandler("nondestination", add_tabu_destinations, pass_args=True))
+    dp.add_handler(CommandHandler("nondestinations", add_tabu_destinations, pass_args=True))
+    dp.add_handler(CommandHandler("destination", add_destination, pass_args=True))
     dp.add_handler(CommandHandler("davai", davai))
     dp.add_handler(CommandHandler("stop", stop))
     dp.add_handler(CommandHandler("pick", pick))
@@ -234,4 +277,6 @@ if __name__ == '__main__':
     solution_managers = dict()
     expecting_id = dict()
     proceed_handlers = dict()
+    destinations = dict()
+    tabu_destinations = dict()
     main()
