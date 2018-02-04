@@ -21,58 +21,56 @@ def start(bot, update):
     if chat_id in origins:
         origins.pop(chat_id)
         
-    if chat_id in dates:
-        dates.pop(chat_id)
+    dates[chat_id] = ('anytime', 'anytime')
         
     if chat_id in solution_managers:
         solution_managers.pop(chat_id)
 
     if chat_id in expecting_id:
-        expecting_id.pop(chat_id)
+        expecting_id.pop(chat_id)    
 
     bot.sendMessage(update.message.chat_id, 
                     text=dedent('''\
                                 Hi!
-                                First, pick origin cities with /origin [name]
-                                e.g. /origin moscow
+                                First, pick origin cities with /origins [name]
+                                e.g. /origins moscow london
                                 Then pick dates with /dates
                                 e.g. /dates 2018-01 2018-03
                                 or /dates anytime
                                 Then start optimizing with /davai
-                                When you see something you like, hit /stop and use /pick to get the booking links for your preferred solution.
+                                When you no longer need new search results, hit /stop
                                 Davai!'''))
 
 def completed(bot, chat_id):
     if chat_id in dates and chat_id in origins:
         bot.sendMessage(chat_id, text="You're good to go! Start me with /davai")
 
-def add_origin(bot, update, args):
+def add_origins(bot, update, args):
     chat_id = update.message.chat_id
     
     if len(args) == 0:
-        bot.sendMessage(chat_id, text='Enter city, airport or country')
-        proceed_handlers[chat_id] = lambda city: add_origin(bot, update, [city])
+        bot.sendMessage(chat_id, text='Where are you flying from? One or more cities')
+        proceed_handlers[chat_id] = lambda cities: add_origins(bot, update, cities.split(' '))
         return
     
-    city_name = args[0]
+    for city_name in args:
+        try:
+            city_id = get_city_id(city_name)
 
-    try:
-        city_id = get_city_id(city_name)
+        except NotFound:
+            bot.sendMessage(chat_id, text=dedent('''We couldn't find a city by that name. Sad!
+                                                    Usage: /origin [cityname]
+                                                    Example: /origin Moscow'''))
+            continue
 
-    except NotFound:
-        bot.sendMessage(chat_id, text=dedent('''We couldn't find a city by that name. Sad!
-                                                Usage: /origin [cityname]
-                                                Example: /origin Moscow'''))
-        return
+        try:
+            origins[chat_id].append(city_id)
 
-    try:
-        origins[chat_id].append(city_id)
+        except KeyError:
+            origins[chat_id] = [city_id]
 
-    except KeyError:
-        origins[chat_id] = [city_id]
-
-    bot.sendMessage(chat_id,
-                    text=city_name + " (City ID: " + city_id + ") added. All good in da hood!\n Currently on the list: " + str(origins[chat_id]))
+        bot.sendMessage(chat_id,
+                        text=city_name + " (City ID: " + city_id + ") added. All good in da hood!\n Currently on the list: " + str(origins[chat_id]))
     completed(bot, chat_id)
 
 def get_dates(bot, update, args):
@@ -219,7 +217,7 @@ def main():
 
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("origin", add_origin, pass_args=True))
+    dp.add_handler(CommandHandler("origins", add_origins, pass_args=True))
     dp.add_handler(CommandHandler("dates", get_dates, pass_args=True))
     dp.add_handler(CommandHandler("davai", davai))
     dp.add_handler(CommandHandler("stop", stop))
