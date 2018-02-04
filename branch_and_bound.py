@@ -2,22 +2,6 @@ from solution import Solution
 from datetime import datetime
 from vadim_interactor import *
 
-def same_city(place1, place2):
-    place1ids = place_ids(place1)
-    place2ids = place_ids(place2)
-    
-    for id1 in place1ids:
-        if id1 in place2ids:
-            return True
-        
-    return False
-
-def date_inside(candidate_date, containing_date):
-    if containing_date == 'anytime':
-        return True
-    
-    return candidate_date.startswith(containing_date)
-
 def feasible_solution(* quotes):
     destinations = all_destinations(*quotes)
     outbounds = all_outbound_dates(*quotes)
@@ -38,6 +22,9 @@ def feasible_solution(* quotes):
     
     return solution
 
+class ContradictingConstraints(Exception):
+    pass
+
 def lower_bound(origins, dates=('anytime', 'anytime'), destination='anywhere', 
                 tabu_destinations=[], tabu_dates=[]):
     def allowed(quote):
@@ -50,7 +37,7 @@ def lower_bound(origins, dates=('anytime', 'anytime'), destination='anywhere',
     
     if not allowed({'OutboundLeg': {'DestinationDetails': destination, 'DepartureDate': dates[0]},
                     'InboundLeg':  {'OriginDetails': destination, 'DepartureDate': dates[1]}}):
-        raise Exception('Infeasible. Constraints contradict each other')
+        raise ContradictingConstraints('Infeasible. Constraints contradict each other')
     
     price = 0
     solution = []
@@ -75,7 +62,7 @@ def solve_branch_and_bound( origins,
                             tabu_destinations=[], 
                             solution_callback=None, 
                             stop_callback=None ):
-    
+
     leaf_solutions = []
     best_feasible_solution = [Solution('anywhere', 'anytime', 'anytime')]
     best_feasible_solution[0].price = float('inf')
@@ -110,13 +97,16 @@ def solve_branch_and_bound( origins,
         if best_solution['price'] >= best_feasible_solution[0].price:
             return best_feasible_solution[0]
         
-        destinations = all_destinations(*best_solution['quotes'])
-        date_pairs = all_dates(*best_solution['quotes'])
+        found_destinations = all_destinations(*best_solution['quotes'])
+        found_date_pairs = all_dates(*best_solution['quotes'])
         
-        for destination, tabu_destinations in zip(destinations + ['anywhere'],
-                                                  [[] for d in destinations] + 
-                                                  [best_solution['tabu_destinations'] + destinations]):
-            for date_pair, tabu_date_pairs in zip(date_pairs + [dates],
-                                                  [[] for d in date_pairs] + 
-                                                  [best_solution['tabu_dates'] + date_pairs]):             
-                tryConstraints(date_pair, destination, tabu_destinations, tabu_date_pairs)
+        for dest, tabu_destinations in zip(found_destinations + [destination],
+                                            [[] for d in found_destinations] + 
+                                            [best_solution['tabu_destinations'] + found_destinations]):
+            for date_pair, tabu_date_pairs in zip(found_date_pairs + [dates],
+                                                  [[] for d in found_date_pairs] + 
+                                                  [best_solution['tabu_dates'] + found_date_pairs]):
+                try:       
+                    tryConstraints(date_pair, dest, tabu_destinations, tabu_date_pairs)
+                except ContradictingConstraints:
+                    return best_feasible_solution[0]
