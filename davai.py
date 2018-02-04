@@ -26,21 +26,47 @@ def start(bot, update):
     expecting_id.pop(chat_id, None)
     destinations.pop(chat_id, None)
 
-    bot.sendMessage(update.message.chat_id, 
-                    text=dedent('''\
-                                Hi!
-                                First, pick origin cities with /origins [name]
-                                e.g. /origins moscow london
-                                Then pick dates with /dates
-                                e.g. /dates 2018-01 2018-03
-                                or /dates anytime
-                                Then start optimizing with /davai
-                                When you no longer need new search results, hit /stop
-                                Davai!'''))
+    status(bot, update)
 
-def completed(bot, chat_id):
-    if chat_id in dates and chat_id in origins:
-        bot.sendMessage(chat_id, text="You're good to go! Start me with /davai")
+def human_list(python_list):
+    if (len(python_list) == 0):
+        return "none"
+    if (len(python_list) == 1):
+        return python_list[0]
+
+    last_two = python_list[-2] + " and " + python_list[-1]
+    return ', '.join(python_list[:-2] + [last_two])
+
+def status(bot, update):
+    chat_id = update.message.chat_id
+
+    my_origins = origins[chat_id]
+    my_destination = destinations[chat_id]['PlaceName'] if chat_id in destinations else 'anywhere'
+    my_dates = dates[chat_id]
+    my_tabus = tabu_destinations[chat_id]
+
+    msg = "You are looking for flights" 
+    if my_origins:
+        msg += " from " + human_list([o['PlaceName'] for o in my_origins])
+    msg += " to " + my_destination # if we did /start correctly, it initialized to 'anywhere'
+    msg += " leaving " + my_dates[0]
+    msg += ", returning " + my_dates[1]
+    if my_tabus:
+        msg += ", avoiding " + human_list([t['PlaceName'] for t in my_tabus])
+        
+    if my_origins:
+        msg += "\n"
+        msg += "\n/destination - specify where you're headed (if you don't, we'll find cheapest destinations for you"
+        msg += "\n/nondestinations - add veto places, in case there are places you want to avoid at all costs"
+        msg += "\n/dates - change the dates when you want to travel. Anytime? 2018? 2018-02? 2018-02-15?"
+        msg += "\n/origins - add more origin cities"
+        msg += "\n/start - start everything from scratch"
+        msg += "\n\n/davai - sounds good, start the search!"
+    else:
+        msg += "\n\nWhere are you travelling from? List one or more cities"
+        proceed_handlers[chat_id] = lambda origins: add_origins(bot, update, origins.split(' '))
+
+    bot.sendMessage(chat_id, msg)
 
 city_not_found = '''We couldn't find a city by that name. Sad!
                     Usage: /origin [cityname]
@@ -66,7 +92,7 @@ def add_origins(bot, update, args):
 
         bot.sendMessage(chat_id,
                         text=place['PlaceName'] + " added. All good in da hood!")
-    completed(bot, chat_id)
+    status(bot, update)
 
 def add_destination(bot, update, args):
     chat_id = update.message.chat_id
@@ -85,7 +111,7 @@ def add_destination(bot, update, args):
         proceed_handlers[chat_id] = lambda dest: add_destination(bot, update, dest)
         return
     
-    completed(bot, chat_id)
+    status(bot, update)
 
 def add_tabu_destinations(bot, update, args):
     chat_id = update.message.chat_id
@@ -108,7 +134,7 @@ def add_tabu_destinations(bot, update, args):
         bot.sendMessage(chat_id,
                         text=place['PlaceName'] + " will not happen. I promise!")
     
-    completed(bot, chat_id)
+    status(bot, update)
 
 def get_dates(bot, update, args):
     print("AYY")
@@ -130,7 +156,7 @@ def get_dates(bot, update, args):
         dates[chat_id] = ['anytime', 'anytime']
         bot.sendMessage(chat_id,
                     text="Anytime, huh? You're an eager one!")
-        completed(bot, chat_id)
+        status(bot, chat_id)
         return
 
     if len(args) == 1:
@@ -153,7 +179,7 @@ def get_dates(bot, update, args):
 
                     dates[chat_id] = [outbound, inbound]
                     bot.sendMessage(chat_id, text=success_msg + str(dates[chat_id]))
-                    completed(bot, chat_id)
+                    status(bot, chat_id)
                     return
 
                 elif len(outbound) == 10:
@@ -166,7 +192,7 @@ def get_dates(bot, update, args):
 
                     dates[chat_id] = [outbound, inbound]
                     bot.sendMessage(chat_id, text=success_msg + str(dates[chat_id]))
-                    completed(bot, chat_id)
+                    status(bot, chat_id)
                     return
 
     bot.sendMessage(chat_id, text=dedent(error_msg))
@@ -185,8 +211,8 @@ def get_solution_processor(bot, chat_id):
     def solution_processor(id, solution):
         msg = solution.destination_city or solution.destination
         msg += " from " + str(solution.price) + " roubles"
-        msg += "\nOutbound date: " + solution.date_come.strftime(FORMAT)
-        msg += "\nInbound date: "+ solution.date_leave.strftime(FORMAT)
+        msg += "\nLeaving " + solution.date_come.strftime(FORMAT)
+        msg += "\nReturning "+ solution.date_leave.strftime(FORMAT)
         for link in get_links_to_links(solution):
             msg += '\n' + link
         bot.sendMessage(chat_id, text=msg)
@@ -195,6 +221,7 @@ def get_solution_processor(bot, chat_id):
 
 @run_async
 def davai(bot, update):
+    bot.sendMessage("My army of bots has started their investigation. They will keep going until you order to /stop")
     chat_id = update.message.chat_id
     sp = get_solution_processor(bot, chat_id)
     solution_managers[chat_id] = SolutionManager(solve_branch_and_bound, sp)
