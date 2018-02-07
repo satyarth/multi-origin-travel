@@ -225,7 +225,7 @@ def davai(bot, update):
     bot.sendMessage(update.message.chat_id, text="My army of bots has started their investigation. They will keep going until you order to /stop")
     chat_id = update.message.chat_id
     sp = get_solution_processor(bot, chat_id)
-    if solution_managers[chat_id]:
+    if chat_id in solution_managers:
         solution_managers[chat_id].stopped = True
     solution_managers[chat_id] = SolutionManager(solve_branch_and_bound, sp)
     solution_managers[chat_id].solve(origins[chat_id], dates[chat_id],
