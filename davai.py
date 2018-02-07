@@ -225,6 +225,7 @@ def davai(bot, update):
     bot.sendMessage(update.message.chat_id, text="My army of bots has started their investigation. They will keep going until you order to /stop")
     chat_id = update.message.chat_id
     sp = get_solution_processor(bot, chat_id)
+    solution_managers[chat_id].stopped = True
     solution_managers[chat_id] = SolutionManager(solve_branch_and_bound, sp)
     solution_managers[chat_id].solve(origins[chat_id], dates[chat_id],
                                      tabu_destinations=tabu_destinations[chat_id],
@@ -235,14 +236,9 @@ def stop(bot, update):
     if chat_id in solution_managers:
         solution_managers[chat_id].stopped = True
         bot.sendMessage(chat_id, text="Okay, I'll stop looking now. Start me again with /start")
-        get_favourite(bot, chat_id)
         return
 
     bot.sendMessage(chat_id, text="Erm, nothing to stop...?")
-
-def get_favourite(bot, chat_id):
-    bot.sendMessage(chat_id, text="Pick your favourite solution and I'll share links to book it :D")
-    expecting_id[chat_id] = True
 
 def error(bot, update, error):
     logger.warn('Update "%s" caused error "%s"' % (update, error))
