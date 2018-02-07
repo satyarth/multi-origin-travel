@@ -204,7 +204,8 @@ def get_solution_processor(bot, chat_id):
                    + '/' + route['OutboundLeg']['OriginDetails']['CityId'] \
                    + '/' + route['InboundLeg']['OriginDetails']['CityId'] \
                    + '/' + route['OutboundLeg']['DepartureDate'].replace('-', '')[2:8] \
-                   + '/' + route['InboundLeg']['DepartureDate'].replace('-', '')[2:8]
+                   + '/' + route['InboundLeg']['DepartureDate'].replace('-', '')[2:8] \
+                   + '?rtn=1'
         
         return map(route2link, solution.routes)
 
